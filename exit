@@ -1,0 +1,236 @@
+[1mdiff --git a/src/main/java/org/Fingerprint/LoginScreen.java b/src/main/java/org/Fingerprint/LoginScreen.java[m
+[1mindex bd316ed..9d5ab95 100644[m
+[1m--- a/src/main/java/org/Fingerprint/LoginScreen.java[m
+[1m+++ b/src/main/java/org/Fingerprint/LoginScreen.java[m
+[36m@@ -1,9 +1,14 @@[m
+ package org.Fingerprint;[m
+ [m
+ import javax.swing.*;[m
+[32m+[m[32mimport javax.swing.border.CompoundBorder;[m
+[32m+[m[32mimport javax.swing.border.EmptyBorder;[m
+[32m+[m[32mimport javax.swing.border.LineBorder;[m
+ import java.awt.*;[m
+ import java.awt.event.ActionEvent;[m
+ import java.awt.event.ActionListener;[m
+[32m+[m[32mimport java.awt.event.FocusEvent;[m
+[32m+[m[32mimport java.awt.event.FocusListener;[m
+ import java.util.HashMap;[m
+ import java.util.Map;[m
+ [m
+[36m@@ -13,10 +18,15 @@[m [mpublic class LoginScreen extends JPanel implements ActionListener {[m
+     private static final String ACT_LOGIN = "login";[m
+     private static final String ACT_CANCEL = "cancel";[m
+ [m
+[32m+[m[32m    // Colors[m
+[32m+[m[32m    private static final Color PRIMARY_COLOR = new Color(15, 76, 26);[m
+[32m+[m[32m    private static final Color SECONDARY_COLOR = new Color(220, 53, 69);[m
+[32m+[m[32m    private static final Color FIELD_BORDER_COLOR = new Color(200, 200, 200);[m
+[32m+[m[32m    private static final Color FIELD_FOCUS_COLOR = new Color(44, 123, 52);[m
+[32m+[m
+     // Simple in-memory user database (in a real app, this would be stored securely)[m
+     private static final Map<String, String> USERS = new HashMap<>();[m
+     static {[m
+[31m-[m
+         USERS.put("admin", "admin123");[m
+         USERS.put("user", "user123");[m
+     }[m
+[36m@@ -28,63 +38,60 @@[m [mpublic class LoginScreen extends JPanel implements ActionListener {[m
+ [m
+     public LoginScreen() {[m
+         setLayout(new BorderLayout());[m
+[31m-        setPreferredSize(new Dimension(400, 400));[m
+[32m+[m[32m        setPreferredSize(new Dimension(400, 520)); // Slightly increased height[m
+[32m+[m
+ [m
+[31m-        // Header panel with logo and title[m
+         JPanel headerPanel = new JPanel();[m
+[31m-        headerPanel.setBackground(new Color(15, 76, 26));[m
+[32m+[m[32m        headerPanel.setBackground(PRIMARY_COLOR);[m
+         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));[m
+[31m-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));[m
+[32m+[m[32m        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));[m
+[32m+[m
+ [m
+         JLabel logoLabel = new JLabel();[m
+         logoLabel.setIcon(new ImageIcon(getClass().getResource("/DTECLogo.png")));[m
+         logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);[m
+ [m
+[32m+[m
+         JLabel moduleLabel = new JLabel("DTEC Fingerprint Login");[m
+         moduleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);[m
+         moduleLabel.setForeground(Color.WHITE);[m
+[31m-        moduleLabel.setFont(new Font("Arial", Font.BOLD, 18));[m
+[32m+[m[32m        moduleLabel.setFont(new Font("Arial", Font.BOLD, 20)); // Increased font size[m
+ [m
+         headerPanel.add(Box.createVerticalStrut(5));[m
+         headerPanel.add(logoLabel);[m
+[31m-        headerPanel.add(Box.createVerticalStrut(5));[m
+[32m+[m[32m        headerPanel.add(Box.createVerticalStrut(10));[m
+         headerPanel.add(moduleLabel);[m
+         headerPanel.add(Box.createVerticalStrut(5));[m
+ [m
+         add(headerPanel, BorderLayout.NORTH);[m
+ [m
+[32m+[m
+         JPanel contentPanel = new JPanel();[m
+         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));[m
+[31m-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));[m
+[32m+[m[32m        contentPanel.setBorder(BorderFactory.createEmptyBorder(25, 30, 25, 30));[m
+         contentPanel.setBackground(Color.WHITE);[m
+ [m
+[32m+[m
+         JLabel lblUsername = new JLabel("Username:");[m
+         lblUsername.setFont(new Font("Arial", Font.BOLD, 16));[m
+         lblUsername.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+         contentPanel.add(lblUsername);[m
+[31m-        contentPanel.add(Box.createVerticalStrut(5));[m
+[32m+[m[32m        contentPanel.add(Box.createVerticalStrut(8));[m
+ [m
+[31m-        m_textUsername = new JTextField();[m
+[31m-        m_textUsername.setFont(new Font("Arial", Font.PLAIN, 16));[m
+[31m-        m_textUsername.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45)); // Increased height[m
+[31m-        m_textUsername.setPreferredSize(new Dimension(Integer.MAX_VALUE, 45)); // Ensure consistent height[m
+[31m-        m_textUsername.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+[32m+[m[32m        m_textUsername = createStyledTextField();[m
+         contentPanel.add(m_textUsername);[m
+[31m-        contentPanel.add(Box.createVerticalStrut(15));[m
+[32m+[m[32m        contentPanel.add(Box.createVerticalStrut(20));[m
+ [m
+         JLabel lblPassword = new JLabel("Password:");[m
+         lblPassword.setFont(new Font("Arial", Font.BOLD, 16));[m
+         lblPassword.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+         contentPanel.add(lblPassword);[m
+[31m-        contentPanel.add(Box.createVerticalStrut(5));[m
+[32m+[m[32m        contentPanel.add(Box.createVerticalStrut(8));[m
+ [m
+[31m-        m_textPassword = new JPasswordField();[m
+[31m-        m_textPassword.setFont(new Font("Arial", Font.PLAIN, 16));[m
+[31m-        m_textPassword.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45)); // Increased height[m
+[31m-        m_textPassword.setPreferredSize(new Dimension(Integer.MAX_VALUE, 45)); // Ensure consistent height[m
+[31m-        m_textPassword.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+[32m+[m[32m        m_textPassword = createStyledPasswordField();[m
+         contentPanel.add(m_textPassword);[m
+[31m-        contentPanel.add(Box.createVerticalStrut(20));[m
+[32m+[m[32m        contentPanel.add(Box.createVerticalStrut(30));[m
+[32m+[m
+ [m
+         JPanel buttonPanel = new JPanel();[m
+         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));[m
+[36m@@ -92,8 +99,8 @@[m [mpublic class LoginScreen extends JPanel implements ActionListener {[m
+         buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+         buttonPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));[m
+ [m
+[31m-        JButton loginButton = createStyledButton("Login", ACT_LOGIN, new Color(15, 76, 26));[m
+[31m-        JButton cancelButton = createStyledButton("Cancel", ACT_CANCEL, new Color(220, 53, 69));[m
+[32m+[m[32m        JButton loginButton = createStyledButton("Login", ACT_LOGIN, PRIMARY_COLOR);[m
+[32m+[m[32m        JButton cancelButton = createStyledButton("Cancel", ACT_CANCEL, SECONDARY_COLOR);[m
+ [m
+         buttonPanel.add(loginButton);[m
+         buttonPanel.add(Box.createHorizontalGlue()); // This pushes the buttons apart[m
+[36m@@ -104,6 +111,76 @@[m [mpublic class LoginScreen extends JPanel implements ActionListener {[m
+         add(contentPanel, BorderLayout.CENTER);[m
+     }[m
+ [m
+[32m+[m[32m    private JTextField createStyledTextField() {[m
+[32m+[m[32m        JTextField textField = new JTextField();[m
+[32m+[m[32m        textField.setFont(new Font("Arial", Font.PLAIN, 16));[m
+[32m+[m[32m        textField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50)); // Increased height[m
+[32m+[m[32m        textField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 50));[m
+[32m+[m[32m        textField.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+[32m+[m
+[32m+[m[32m        // Create rounded border with padding[m
+[32m+[m[32m        textField.setBorder(new CompoundBorder([m
+[32m+[m[32m                new LineBorder(FIELD_BORDER_COLOR, 1, true), // Outer border - rounded[m
+[32m+[m[32m                new EmptyBorder(5, 10, 5, 10)  // Inner padding[m
+[32m+[m[32m        ));[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        textField.addFocusListener(new FocusListener() {[m
+[32m+[m[32m            @Override[m
+[32m+[m[32m            public void focusGained(FocusEvent e) {[m
+[32m+[m[32m                textField.setBorder(new CompoundBorder([m
+[32m+[m[32m                        new LineBorder(FIELD_FOCUS_COLOR, 2, true),[m
+[32m+[m[32m                        new EmptyBorder(4, 9, 4, 9)  // Adjusted to maintain same size[m
+[32m+[m[32m                ));[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            @Override[m
+[32m+[m[32m            public void focusLost(FocusEvent e) {[m
+[32m+[m[32m                textField.setBorder(new CompoundBorder([m
+[32m+[m[32m                        new LineBorder(FIELD_BORDER_COLOR, 1, true),[m
+[32m+[m[32m                        new EmptyBorder(5, 10, 5, 10)[m
+[32m+[m[32m                ));[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        return textField;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private JPasswordField createStyledPasswordField() {[m
+[32m+[m[32m        JPasswordField passwordField = new JPasswordField();[m
+[32m+[m[32m        passwordField.setFont(new Font("Arial", Font.PLAIN, 16));[m
+[32m+[m[32m        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50)); // Increased height[m
+[32m+[m[32m        passwordField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 50));[m
+[32m+[m[32m        passwordField.setAlignmentX(Component.LEFT_ALIGNMENT);[m
+[32m+[m
+[32m+[m[32m        // Create rounded border with padding[m
+[32m+[m[32m        passwordField.setBorder(new CompoundBorder([m
+[32m+[m[32m                new LineBorder(FIELD_BORDER_COLOR, 1, true), // Outer border - rounded[m
+[32m+[m[32m                new EmptyBorder(5, 10, 5, 10)  // Inner padding[m
+[32m+[m[32m        ));[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        passwordField.addFocusListener(new FocusListener() {[m
+[32m+[m[32m            @Override[m
+[32m+[m[32m            public void focusGained(FocusEvent e) {[m
+[32m+[m[32m                passwordField.setBorder(new CompoundBorder([m
+[32m+[m[32m                        new LineBorder(FIELD_FOCUS_COLOR, 2, true),[m
+[32m+[m[32m                        new EmptyBorder(4, 9, 4, 9)  // Adjusted to maintain same size[m
+[32m+[m[32m                ));[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            @Override[m
+[32m+[m[32m            public void focusLost(FocusEvent e) {[m
+[32m+[m[32m                passwordField.setBorder(new CompoundBorder([m
+[32m+[m[32m                        new LineBorder(FIELD_BORDER_COLOR, 1, true),[m
+[32m+[m[32m                        new EmptyBorder(5, 10, 5, 10)[m
+[32m+[m[32m                ));[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        return passwordField;[m
+[32m+[m[32m    }[m
+[32m+[m
+     private JButton createStyledButton(String text, String command, Color backgroundColor) {[m
+         JButton button = new JButton(text);[m
+         button.setActionCommand(command);[m
+[36m@@ -112,9 +189,27 @@[m [mpublic class LoginScreen extends JPanel implements ActionListener {[m
+         button.setForeground(Color.WHITE);[m
+         button.setFont(new Font("Arial", Font.BOLD, 16));[m
+         button.setFocusPainted(false);[m
+[31m-        button.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        button.setBorder(BorderFactory.createCompoundBorder([m
+[32m+[m[32m                BorderFactory.createLineBorder(backgroundColor.darker(), 1, true),[m
+[32m+[m[32m                BorderFactory.createEmptyBorder(10, 30, 10, 30)[m
+[32m+[m[32m        ));[m
+[32m+[m
+         button.setCursor(new Cursor(Cursor.HAND_CURSOR));[m
+[31m-        button.setPreferredSize(new Dimension(150, 45));[m
+[32m+[m[32m        button.setPreferredSize(new Dimension(150, 50)); // Increased height[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        button.addMouseListener(new java.awt.event.MouseAdapter() {[m
+[32m+[m[32m            public void mouseEntered(java.awt.event.MouseEvent evt) {[m
+[32m+[m[32m                button.setBackground(backgroundColor.darker());[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            public void mouseExited(java.awt.event.MouseEvent evt) {[m
+[32m+[m[32m                button.setBackground(backgroundColor);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+         return button;[m
+     }[m
+ [m
