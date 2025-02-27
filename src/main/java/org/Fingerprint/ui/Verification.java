@@ -2,12 +2,14 @@ package org.Fingerprint.ui;
 
 import com.digitalpersona.uareu.*;
 import lombok.extern.slf4j.Slf4j;
+import org.Fingerprint.LocalVariable;
 import org.Fingerprint.web_socket.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +26,7 @@ public class Verification extends JPanel implements ActionListener {
     private JDialog m_dlgParent;
     private JTextArea m_text;
     private static List<Fingerprint> encodedFingerprints;
+    private static List<String> registeredFingerprints;
 
     private static MyStompClient myStompClient;
 
@@ -33,6 +36,7 @@ public class Verification extends JPanel implements ActionListener {
         m_reader = reader;
         m_fmds = new Fmd[1];
         encodedFingerprints = new ArrayList<>();
+        registeredFingerprints = new ArrayList<>();
 
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(400, 600));
@@ -148,12 +152,11 @@ public class Verification extends JPanel implements ActionListener {
 
                     if (null != m_fmds[0]) {
                         boolean matchFound = false;
-                        Map<String, String> tempMap = new HashMap<>();
-                        log.info("TRY {}",encodedFingerprints.size());
-                        for (var encodedFingerprint : encodedFingerprints) {
+                        log.info("TRY {}", registeredFingerprints.size());
+                        for (var encodedFingerprint : registeredFingerprints) {
                             try {
                                 // Decode stored fingerprint
-                                byte[] fingerprintBytes = Base64.getDecoder().decode(encodedFingerprint.getFingerprint());
+                                byte[] fingerprintBytes = Base64.getDecoder().decode(encodedFingerprint);
 
                                 // Create FMD directly from stored data
                                 Fmd storedFmd = UareUGlobal.GetImporter().ImportFmd(fingerprintBytes, Fmd.Format.ANSI_378_2004, Fmd.Format.ANSI_378_2004);
@@ -169,9 +172,8 @@ public class Verification extends JPanel implements ActionListener {
                                         JOptionPane.showMessageDialog(null, "Failed to send fingerprint print");
                                         break;
                                     }
-
-                                    tempMap.put("ip", ip);
-                                    tempMap.put("fingerprint_matched_id", String.valueOf(encodedFingerprint.getId()));
+                                    Map<String, String> tempMap = new HashMap<>();
+                                    tempMap.put("username", LocalVariable.username);
                                     matchFound = true;
                                     m_text.append("Fingerprint matched!\n");
                                     String str = String.format("Dissimilarity score: 0x%x\n", falsematch_rate);
@@ -241,6 +243,13 @@ public class Verification extends JPanel implements ActionListener {
         }
     }
 
+    private static void fetchedRegisteredFingerprints() throws IOException, InterruptedException {
+        var fingerprints = FingerprintUtil.getRegisteredFingerprints();
+        for (String fingerprint : fingerprints) {
+            registeredFingerprints.add(fingerprint);
+        }
+    }
+
     private static void fetchFingerprint() throws ExecutionException, InterruptedException {
         if (encodedFingerprints != null)
             encodedFingerprints.clear();
@@ -258,8 +267,9 @@ public class Verification extends JPanel implements ActionListener {
         }, "");
     }
 
-    public static void Run(Reader reader) throws ExecutionException, InterruptedException {
+    public static void Run(Reader reader) throws ExecutionException, InterruptedException, IOException {
         fetchFingerprint();
+        fetchedRegisteredFingerprints();
         JDialog dlg = new JDialog((JDialog) null, "Verification", true);
         Verification verification = new Verification(reader);
         verification.doModal(dlg);

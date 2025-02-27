@@ -1,5 +1,8 @@
 package org.Fingerprint;
 
+import org.Fingerprint.web_socket.FingerprintUtil;
+import org.Fingerprint.web_socket.IpApiUtil;
+
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -9,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,6 +113,27 @@ public class LoginScreen extends JPanel implements ActionListener {
         contentPanel.add(buttonPanel);
 
         add(contentPanel, BorderLayout.CENTER);
+
+        loginButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    String result = IpApiUtil.authenticate(m_textUsername.getText(), m_textPassword.getText());
+                    if(result == null){
+                        JOptionPane.showMessageDialog(null, "Incorrect username or password");
+                        LocalVariable.username = null;
+                        LocalVariable.token = null;
+                    }else{
+                        LocalVariable.username = m_textUsername.getText();
+                        LocalVariable.token = result;
+                    }
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
     }
 
     private JTextField createStyledTextField() {

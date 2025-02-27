@@ -48,7 +48,7 @@ public class MyStompClient {
 
     public void sendValidatedFingerprint(Map<String, String> data){
         try {
-            session.send("/app/success.fingerprint", data);
+            session.send("/app/validated-fingerprint", data);
         } catch (Exception e) {
             e.printStackTrace();
         }

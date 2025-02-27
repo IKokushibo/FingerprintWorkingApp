@@ -13,6 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 
@@ -131,8 +132,10 @@ public class DTECFingerprint extends JPanel implements ActionListener {
 					Verification.Run(m_reader);
 				} catch (ExecutionException | InterruptedException ex) {
 					throw new RuntimeException(ex);
-				}
-			}
+				} catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
 		} else if(e.getActionCommand().equals(ACT_ENROLLMENT)) {
 			if(null == m_reader) {
 				MessageBox.Warning("Reader is not selected");

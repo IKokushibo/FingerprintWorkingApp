@@ -1,9 +1,10 @@
 package org.Fingerprint.web_socket;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.Fingerprint.LocalVariable;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -11,7 +12,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,53 +61,85 @@ public class FingerprintUtil {
 //
 //        return encodedFingerprints;
 //    }
-public static List<Fingerprint> getFingerprints(Object body) throws Exception {
-    List<Fingerprint> encodedFingerprints = new ArrayList<>();
-    String myIp = UserUtil.getMyIp();
 
-    if (!(body instanceof Map)) {
-        JOptionPane.showMessageDialog(null, "Invalid body format");
-        return encodedFingerprints;
+
+    public static List<String> getRegisteredFingerprints() throws IOException, InterruptedException {
+        // Create HttpClient
+        HttpClient client = HttpClient.newHttpClient();
+
+        // Build the HTTP POST request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://dtec-spring-boot-p3ck.onrender.com/api/v1/fingerprints"))
+                .header("Content-Type", "application/json")
+                .headers("Authorization", LocalVariable.token)
+                .GET()
+                .build();
+
+        // Send the request and get the response
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        // Check status code
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Failed to fetch fingerprints: " + response.statusCode());
+        }
+
+        // Parse JSON response
+        JSONObject jsonResponse = new JSONObject(response.body());
+        System.out.println("Response JSON: " + jsonResponse);
+
+        // Extract "fingerprints" array from JSON and convert to List<String>
+        JSONArray fingerprintsArray = jsonResponse.getJSONArray(LocalVariable.username);
+        return fingerprintsArray.toList().stream()
+                .map(Object::toString)
+                .toList();
     }
 
-    Map<String, Object> bodyMap = (Map<String, Object>) body;
-    Object data = bodyMap.get("data");
+    public static List<Fingerprint> getFingerprints(Object body) throws Exception {
+        List<Fingerprint> encodedFingerprints = new ArrayList<>();
+        String myIp = UserUtil.getMyIp();
 
-    if (!(data instanceof List)) {
-        JOptionPane.showMessageDialog(null, "No Fingerprint Found");
-        return encodedFingerprints;
-    }
+        if (!(body instanceof Map)) {
+            JOptionPane.showMessageDialog(null, "Invalid body format");
+            return encodedFingerprints;
+        }
 
-    List<Object> dataList = (List<Object>) data;
-    for (Object item : dataList) {
-        if (!(item instanceof Map)) continue;
+        Map<String, Object> bodyMap = (Map<String, Object>) body;
+        Object data = bodyMap.get("data");
 
-        Map<String, Object> dataItem = (Map<String, Object>) item;
-        String webIp = (String) dataItem.get("ip");
+        if (!(data instanceof List)) {
+            JOptionPane.showMessageDialog(null, "No Fingerprint Found");
+            return encodedFingerprints;
+        }
 
-        if (myIp.equals(webIp)) {
-            List<Object> fingerprints = (List<Object>) dataItem.get("fingerprints");
-            if (fingerprints == null) continue;
+        List<Object> dataList = (List<Object>) data;
+        for (Object item : dataList) {
+            if (!(item instanceof Map)) continue;
 
-            for (Object fingerprint : fingerprints) {
-                if (!(fingerprint instanceof Map)) continue;
+            Map<String, Object> dataItem = (Map<String, Object>) item;
+            String webIp = (String) dataItem.get("ip");
 
-                Map<String, String> fingerprintMap = (Map<String, String>) fingerprint;
-                try {
-                    int id = Integer.parseInt(fingerprintMap.get("id"));
-                    String dataValue = fingerprintMap.get("data");
-                    encodedFingerprints.add(new Fingerprint(id, dataValue));
-                } catch (NumberFormatException | NullPointerException e) {
-                    JOptionPane.showMessageDialog(null, "Invalid fingerprint data");
+            if (myIp.equals(webIp)) {
+                List<Object> fingerprints = (List<Object>) dataItem.get("fingerprints");
+                if (fingerprints == null) continue;
+
+                for (Object fingerprint : fingerprints) {
+                    if (!(fingerprint instanceof Map)) continue;
+
+                    Map<String, String> fingerprintMap = (Map<String, String>) fingerprint;
+                    try {
+                        int id = Integer.parseInt(fingerprintMap.get("id"));
+                        String dataValue = fingerprintMap.get("data");
+                        encodedFingerprints.add(new Fingerprint(id, dataValue));
+                    } catch (NumberFormatException | NullPointerException e) {
+                        JOptionPane.showMessageDialog(null, "Invalid fingerprint data");
+                    }
                 }
             }
         }
+
+        return encodedFingerprints;
     }
 
-    return encodedFingerprints;
-}
-
-    public static List<String> getAllStoredFingerprints(){
+    public static List<String> getAllStoredFingerprints() {
         String urlString = "https://dtec-spring-boot-p3ck.onrender.com/api/v1/auth/fingerprints";
         String jsonPayload = "{\"code\":\"3C1224C7DC1569381DE63C223113D9A524A1DE63C223113D9A524AF8E2A3113D9A524A1DE63C223113D9A524AF8E2A63C1224C7DC1569381DE63F8E2A63C1224C7DC1569381DE63C63C1224C7DC1569381DE63F8E2A63C1224C7DC1569381DE63CDE1D7C5F65177BF5\"}";
         StringBuilder response = new StringBuilder();
@@ -164,7 +201,7 @@ public static List<Fingerprint> getFingerprints(Object body) throws Exception {
         return null;
     }
 
-    public static String getWebSocketCode(){
+    public static String getWebSocketCode() {
         return "3C1224C7DC1569381DE63C223113D9A524A1DE63C223113D9A524AF8E2A3113D9A524A1DE63C223113D9A524AF8E2A63C1224C7DC1569381DE63F8E2A63C1224C7DC1569381DE63C63C1224C7DC1569381DE63F8E2A63C1224C7DC1569381DE63CDE1D7C5F65177BF5";
     }
 
